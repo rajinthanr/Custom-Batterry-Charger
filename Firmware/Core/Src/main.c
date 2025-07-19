@@ -76,6 +76,10 @@ float targetVoltage = 3.3f; // Target voltage for the PWM output
 float targetCurrent = 0.5f; // Target current for the PWM output
 float kp = 0.1f; // Proportional gain for voltage control
 float ki = 0.01f; // Integral gain for voltage control
+int output=1;
+int feedback=0;
+
+
 
 
 
@@ -176,6 +180,32 @@ int main(void)
 
     i_out = readADC(ADC_CHANNEL_2) *(10000.0/22)* (3.3f / 4095.0f); // Read ADC value and convert to current
 
+
+    // Simple low-pass filter for each reading
+    static float v_out_filt = 0.0f;
+    static float v_in_filt = 0.0f;
+    static float i_out_filt = 0.0f;
+    const float alpha = 0.5f; // Smoothing factor (0 < alpha < 1)
+
+    v_out_filt = alpha * v_out + (1.0f - alpha) * v_out_filt;
+    v_in_filt = alpha * v_in + (1.0f - alpha) * v_in_filt;
+    i_out_filt = alpha * i_out + (1.0f - alpha) * i_out_filt;
+
+    // Use filtered values for control and feedback
+    v_out = v_out_filt;
+    v_in = v_in_filt;
+    i_out = i_out_filt;
+
+    char vin_str[32];
+
+    if(feedback){
+      feedback=0;
+      snprintf(vin_str, sizeof(vin_str), "VOUT:%.2f,IOUT:%.2f,VIN:%.2f\r\n", v_out, i_out, v_in);
+      CDC_Transmit_FS((uint8_t*)vin_str, strlen(vin_str));
+    }
+
+
+
     // Voltage control loop
     float voltageError = targetVoltage - v_out; // Calculate voltage error
     float voltageControl = kp * voltageError; // Proportional control for voltage
@@ -198,11 +228,14 @@ int main(void)
 
     if (pulseWidth < 0.0f) {
       pulseWidth = 0.0f; // Ensure pulse width does not go below 0
-    } else if (pulseWidth > 1.0f) {
-      pulseWidth = 1.0f; // Ensure pulse width does not exceed 1
+    } else if (pulseWidth > 0.99f) {
+      pulseWidth = 0.99f; // Ensure pulse width does not exceed 1
     }
 
-    pwm(pulseWidth); // Set PWM output based on pulse width
+    if(output)
+      pwm(pulseWidth); // Set PWM output based on pulse width
+    else 
+      pwm(0);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

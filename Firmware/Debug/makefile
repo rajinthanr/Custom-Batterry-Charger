@@ -88,8 +88,8 @@ all: main-build
 main-build: Custom-Batterry-Charger.elf secondary-outputs
 
 # Tool invocations
-Custom-Batterry-Charger.elf Custom-Batterry-Charger.map: $(OBJS) $(USER_OBJS) /home/rajinthan/Workspace/Git/Custom-Batterry-Charger/Firmware/STM32F411CEUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-g++ -o "Custom-Batterry-Charger.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/rajinthan/Workspace/Git/Custom-Batterry-Charger/Firmware/STM32F411CEUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Custom-Batterry-Charger.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
+Custom-Batterry-Charger.elf Custom-Batterry-Charger.map: $(OBJS) $(USER_OBJS) C:\Workspaces\Git\Custom-Batterry-Charger\Firmware\STM32F411CEUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-g++ -o "Custom-Batterry-Charger.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Workspaces\Git\Custom-Batterry-Charger\Firmware\STM32F411CEUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Custom-Batterry-Charger.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
