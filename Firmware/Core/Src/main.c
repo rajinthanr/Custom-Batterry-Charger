@@ -56,7 +56,6 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_I2C1_Init(void);
-static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -71,11 +70,17 @@ float v_out = 0.0f; // Variable to hold the output voltage
 float v_in = 0.0f; // Variable to hold the input voltage
 float i_out = 0.0f; // Variable to hold the output current
 
+float targetVoltage = 3.3f; // Target voltage for the PWM output
+float targetCurrent = 0.5f; // Target current for the PWM output
+float kp = 0.1f; // Proportional gain for voltage control
+float ki = 0.01f; // Integral gain for voltage control
+
+
 
 
 int readADC(uint32_t pin){
   ADC_ChannelConfTypeDef sConfig = {0};
-  sConfig.Channel = ADC_CHANNEL_2;
+  sConfig.Channel = pin;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
 
@@ -92,7 +97,24 @@ int readADC(uint32_t pin){
   HAL_ADC_Stop(&hadc1);
 
   return HAL_ADC_GetValue(&hadc1);
-} 
+}
+
+void pwm(float pulseWidth) {
+  TIM_OC_InitTypeDef sConfigOC = {0};
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = pulseWidth * 4095; // Scale pulse width to match timer resolution
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+}
+
+
 /* USER CODE END 0 */
 
 /**
@@ -126,7 +148,6 @@ int main(void)
   MX_GPIO_Init();
   MX_ADC1_Init();
   MX_I2C1_Init();
-  MX_TIM1_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
@@ -137,17 +158,23 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    v_out = readADC(ADC_CHANNEL_0) *5.7* (3.3f / 4095.0f); // Read ADC value and convert to voltage
 
-    TIM_OC_InitTypeDef sConfigOC = {0};
-    sConfigOC.OCMode = TIM_OCMODE_PWM1;
-    sConfigOC.Pulse = pulseWidth*4095; // Example: Set pulse width based on GPIO pin state
-    sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-    sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+    v_in = readADC(ADC_CHANNEL_9) *5.7* (3.3f / 4095.0f); // Read ADC value and convert to voltage
 
-    v_out = readADC(ADC_CHANNEL_2) *5.7* (3.3f / 4095.0f); // Read ADC value and convert to voltage
+    i_out = readADC(ADC_CHANNEL_2) *(10000.0/22)* (3.3f / 4095.0f); // Read ADC value and convert to current
 
-    HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_3);
-    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+    // Voltage control loop
+    float voltageError = targetVoltage - v_out; // Calculate voltage error
+    float voltageControl = kp * voltageError; // Proportional control for voltage
+    //pulseWidth += voltageControl; // Adjust pulse width based on voltage control
+    if (pulseWidth < 0.0f) {
+      pulseWidth = 0.0f; // Ensure pulse width does not go below 0
+    } else if (pulseWidth > 1.0f) {
+      pulseWidth = 1.0f; // Ensure pulse width does not exceed 1
+    }
+
+    pwm(pulseWidth); // Set PWM output based on pulse width
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -345,6 +372,7 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 0 */
 
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
   TIM_OC_InitTypeDef sConfigOC = {0};
 
@@ -354,9 +382,18 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 4294967295;
+  htim2.Init.Period = 4095;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
   if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
   {
     Error_Handler();
