@@ -36,7 +36,10 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pcd_ex.h \
  ../USB_DEVICE/App/usb_device.h \
  ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h \
- ../USB_DEVICE/Target/usbd_conf.h
+ ../USB_DEVICE/Target/usbd_conf.h ../Core/Inc/ssd1306.h \
+ ../Core/Inc/ssd1306_conf.h ../Core/Inc/ssd1306_fonts.h \
+ ../Core/Inc/ssd1306_fonts.h ../Core/Inc/ssd1306_tests.h \
+ ../Core/Inc/liquidcrystal_i2c.h ../Core/Inc/DS18B20.hpp
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
@@ -76,3 +79,10 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../USB_DEVICE/App/usb_device.h:
 ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h:
 ../USB_DEVICE/Target/usbd_conf.h:
+../Core/Inc/ssd1306.h:
+../Core/Inc/ssd1306_conf.h:
+../Core/Inc/ssd1306_fonts.h:
+../Core/Inc/ssd1306_fonts.h:
+../Core/Inc/ssd1306_tests.h:
+../Core/Inc/liquidcrystal_i2c.h:
+../Core/Inc/DS18B20.hpp:

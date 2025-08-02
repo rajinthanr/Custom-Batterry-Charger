@@ -23,6 +23,14 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "ssd1306.h"
+#include "ssd1306_fonts.h"
+#include "ssd1306_tests.h"
+#include "liquidcrystal_i2c.h"
+#include "DS18B20.hpp"
+
+
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,8 +55,10 @@ I2C_HandleTypeDef hi2c1;
 
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim10;
 
 /* USER CODE BEGIN PV */
+ c
 
 /* USER CODE END PV */
 
@@ -59,6 +69,7 @@ static void MX_ADC1_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_TIM10_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -162,10 +173,27 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_USB_DEVICE_Init();
+  MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
 
   toggle(); // Initial toggle to indicate start
   toggle();
+
+  HD44780_Init(2);
+
+  /* Clear buffer */
+  HD44780_Clear();
+
+  /* Hide characters */
+  HD44780_NoDisplay();
+  HD44780_Cursor();
+  HD44780_SetCursor(0,0);
+  HD44780_PrintStr("Booting...");
+  HD44780_PrintSpecialChar(0);
+
+  /* Show characters */
+  HD44780_Display();
+  HAL_Delay(1000);
 
 
   /* USER CODE END 2 */
@@ -179,6 +207,19 @@ int main(void)
     v_in = readADC(ADC_CHANNEL_9) *5.7* (3.3f / 4095.0f); // Read ADC value and convert to voltage
 
     i_out = readADC(ADC_CHANNEL_2) *(10000.0/22)* (3.3f / 4095.0f); // Read ADC value and convert to current
+
+    static uint32_t last_lcd_update = 0;
+    if (HAL_GetTick() - last_lcd_update > 1000) {
+      last_lcd_update = HAL_GetTick();
+      char lcd_line1[17], lcd_line2[17];
+      snprintf(lcd_line1, sizeof(lcd_line1), "V: %.2fV", v_out);
+      snprintf(lcd_line2, sizeof(lcd_line2), "I: %.2fmA", i_out);
+      HD44780_Clear();
+      HD44780_SetCursor(0, 0);
+      HD44780_PrintStr(lcd_line1);
+      HD44780_SetCursor(0, 1);
+      HD44780_PrintStr(lcd_line2);
+    }
 
 
     // Simple low-pass filter for each reading
@@ -480,6 +521,37 @@ static void MX_TIM2_Init(void)
 }
 
 /**
+  * @brief TIM10 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM10_Init(void)
+{
+
+  /* USER CODE BEGIN TIM10_Init 0 */
+
+  /* USER CODE END TIM10_Init 0 */
+
+  /* USER CODE BEGIN TIM10_Init 1 */
+
+  /* USER CODE END TIM10_Init 1 */
+  htim10.Instance = TIM10;
+  htim10.Init.Prescaler = 25-1;
+  htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim10.Init.Period = 65535;
+  htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim10.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM10_Init 2 */
+
+  /* USER CODE END TIM10_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -507,11 +579,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PB8 */
-  GPIO_InitStruct.Pin = GPIO_PIN_8;
+  /*Configure GPIO pin : TEM_Pin */
+  GPIO_InitStruct.Pin = TEM_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(TEM_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 

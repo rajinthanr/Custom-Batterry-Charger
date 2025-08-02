@@ -258,36 +258,9 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   * @param  Len: Number of data received (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
-
-extern float targetVoltage;
-extern float targetCurrent;
-extern int output;
-extern int feedback;
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
-	Buf[*Len] = '\0';  // Null-terminate the received string
-
-	    // Example expected format: "V:5.12 I:300\n"
-	    float v, i;
-      int out,fb;
-      if (sscanf((char*)Buf, "V:%f", &v) == 1) {
-	    	targetVoltage = v;
-	    }
-
-      if (sscanf((char*)Buf, "I:%f",&i) == 1) {
-	    	targetCurrent = i;
-	    }
-
-      if (sscanf((char*)Buf, "O:%d", &out) == 1) {
-        output = out;
-	    }
-
-      if (sscanf((char*)Buf, "F:%d", &fb) == 1) {
-        feedback=fb;
-	    }
-
-  
-
+  /* USER CODE BEGIN 6 */
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
   return (USBD_OK);
