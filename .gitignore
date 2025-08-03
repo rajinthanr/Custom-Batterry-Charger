@@ -1,4 +1,4 @@
 .vscode
-Firmware/Debug
+Firmware/Debug/
 Firmware/Drivers
 Firmware/Core/Src/main.c
