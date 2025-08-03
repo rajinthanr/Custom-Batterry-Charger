@@ -23,6 +23,8 @@
 
 /* USER CODE BEGIN INCLUDE */
 
+
+
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,6 +33,11 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+
+extern float targetVoltage;
+extern float targetCurrent;
+extern int output;
+extern int feedback;
 
 /* USER CODE END PV */
 
@@ -261,6 +268,28 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
+
+  Buf[*Len] = '\0';  // Null-terminate the received string
+
+	    // Example expected format: "V:5.12 I:300\n"
+	    float v, i;
+      int out,fb;
+      if (sscanf((char*)Buf, "V:%f", &v) == 1) {
+	    	targetVoltage = v;
+	    }
+
+      if (sscanf((char*)Buf, "I:%f",&i) == 1) {
+	    	targetCurrent = i;
+	    }
+
+      if (sscanf((char*)Buf, "O:%d", &out) == 1) {
+        output = out;
+	    }
+
+      if (sscanf((char*)Buf, "F:%d", &fb) == 1) {
+        feedback=fb;
+	    }
+      
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
   return (USBD_OK);
